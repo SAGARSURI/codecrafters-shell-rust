@@ -1,8 +1,8 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::process::{exit, ExitCode};
+use std::process::exit;
 
-fn main() -> ExitCode {
+fn main() {
     loop {
         print!("$ ");
         io::stdout().flush().unwrap();
@@ -11,15 +11,15 @@ fn main() -> ExitCode {
         let input = read_line();
         let parts: Vec<&str> = input.split_whitespace().collect();
         let command = parts.get(0);
-        let args = parts.get(1..);
+        let args = parts.get(1..).unwrap_or_default();
         match command {
             Some(&"exit") => {
-                if let Some(arg_list) = args {
-                    exit(arg_list.get(0).unwrap().parse::<i32>().unwrap());
+                if !args.is_empty() {
+                    exit(args[0].parse::<i32>().unwrap_or(0));
                 }
-            },
-            _ => println!("{}: command not found", input)
-            
+            }
+            Some(&"echo") => println!("{}", args.join(" ")),
+            _ => println!("{}: command not found", input),
         }
     }
 }
