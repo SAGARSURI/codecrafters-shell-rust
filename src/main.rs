@@ -22,10 +22,13 @@ fn main() {
             Some(&cmd) if cmd == Commands::Type.to_string() => {
                 if let Some(&first_arg) = args.first() {
                     match first_arg {
-                        arg if arg == Commands::Echo.to_string() || arg == Commands::Exit.to_string() => {
+                        arg if arg == Commands::Echo.to_string()
+                            || arg == Commands::Exit.to_string()
+                            || arg == Commands::Type.to_string() =>
+                        {
                             println!("{} is a shell builtin", arg);
                         }
-                        _ => println!("{}: command not found", first_arg)
+                        _ => println!("{}: not found", first_arg),
                     }
                 }
             }
