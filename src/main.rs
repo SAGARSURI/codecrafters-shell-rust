@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::{env, process::exit};
+use std::{env, path::PathBuf, process::{exit, Command}};
 
 fn main() {
     loop {
@@ -22,7 +22,7 @@ fn main() {
             Some(&cmd) if cmd == Commands::Type.to_string() => {
                 if let Some(&first_arg) = args.first() {
                     match first_arg {
-                        arg if arg == Commands::Echo.to_string()
+                        arg if arg == Commands::Echo.to_string() || arg == Commands::Pwd.to_string()
                             || arg == Commands::Exit.to_string()
                             || arg == Commands::Type.to_string() =>
                         {
@@ -37,6 +37,10 @@ fn main() {
                     }
                 }
             }
+            Some(&cmd) if cmd == Commands::Pwd.to_string() => {
+                let result = env::current_dir();
+                println!("{}", result.unwrap().display());
+            }
             Some(&full_path) if get_path(command.unwrap()).is_some() => {
                 let output = execute_program(full_path, args);
                 println!("{}", output.unwrap());
@@ -50,11 +54,11 @@ fn get_path(cmd: &str) -> Option<String> {
     let sys_path_result = env::var("PATH");
     match sys_path_result {
         Ok(sys_path) => {
-            let paths: Vec<&str> = sys_path.split(':').collect();
+            let paths: Vec<PathBuf> = env::split_paths(&sys_path).collect();
             for path in paths {
-                let full_path = format!("{}/{}", path, cmd);
-                if std::fs::metadata(&full_path).is_ok() {
-                    return Some(full_path);
+                let full_path = path.join(cmd);
+                if full_path.exists() {
+                    return Some(full_path.to_string_lossy().into_owned());
                 }
             }
         }
@@ -64,7 +68,7 @@ fn get_path(cmd: &str) -> Option<String> {
 }
 
 fn execute_program(path: &str, args: &[&str]) -> Option<String> {
-    let output = std::process::Command::new(path).args(args).output();
+    let output = Command::new(path).args(args).output();
     if output.is_ok() {
         return Some(String::from_utf8_lossy(&output.unwrap().stdout).trim().to_string());
     }
@@ -79,6 +83,7 @@ fn read_line() -> String {
 }
 
 enum Commands {
+    Pwd,
     Echo,
     Exit,
     Type,
@@ -87,6 +92,7 @@ enum Commands {
 impl Commands {
     fn to_string(&self) -> &str {
         match self {
+            Commands::Pwd => "pwd",
             Commands::Echo => "echo",
             Commands::Exit => "exit",
             Commands::Type => "type",
